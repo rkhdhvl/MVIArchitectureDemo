@@ -4,50 +4,43 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import com.practice.mviarchitecturedemo.ui.api.MyRetrofitBuilder
 import com.practice.mviarchitecturedemo.ui.main.ui.state.MainViewState
+import com.practice.mviarchitecturedemo.ui.model.BlogPost
+import com.practice.mviarchitecturedemo.ui.model.User
 import com.practice.mviarchitecturedemo.ui.util.*
 
 object Repository {
-    fun getBlogPosts(): LiveData<DataState<MainViewState>> {
-        return Transformations.switchMap(MyRetrofitBuilder.apiService.getBlogPosts()) { apiResponse ->
-            object : LiveData<DataState<MainViewState>>() {
-                override fun onActive() {
-                    super.onActive()
-                    when (apiResponse) {
-                        is ApiSuccessResponse -> {
-                            value = DataState(data = MainViewState(blogPosts = apiResponse.body))
-                        }
-                        is ApiErrorResponse -> {
-                            value = DataState.error(message = apiResponse.errorMessage)
-                        }
-                        is ApiEmptyResponse -> {
-                            value = DataState.error(message = "Some Error")
-                        }
-                    }
-                }
+
+    fun getBlogPosts() : LiveData<DataState<MainViewState>>{
+        return object : NetworkBoundResource<List<BlogPost>,MainViewState>()
+        {
+            override fun handleApiSuccessResponse(response: ApiSuccessResponse<List<BlogPost>>) {
+              result.value = DataState.data(
+                  data = MainViewState(blogPosts = response.body)
+              )
             }
-        }
+
+            override fun createCall(): LiveData<GenericApiResponse<List<BlogPost>>> {
+                 return MyRetrofitBuilder.apiService.getBlogPosts()
+            }
+
+        }.asLiveData()
     }
 
     fun getUser(userId: String): LiveData<DataState<MainViewState>> {
-        return Transformations.switchMap(MyRetrofitBuilder.apiService.GetUser(userId)) { apiResponse ->
-            object : LiveData<DataState<MainViewState>>() {
-                override fun onActive() {
-                    super.onActive()
-                    when (apiResponse) {
-                        is ApiSuccessResponse -> {
-                            value = DataState(data=MainViewState(
-                                user = apiResponse.body
-                            ))
-                        }
-                        is ApiErrorResponse -> {
-                            value = DataState.error(message = apiResponse.errorMessage)
-                        }
-                        is ApiEmptyResponse -> {
-                            value = DataState.error(message = "Some Error")
-                        }
-                    }
-                }
+        return object : NetworkBoundResource<User,MainViewState>()
+        {
+            override fun handleApiSuccessResponse(response: ApiSuccessResponse<User>) {
+                result.value = DataState.data(
+                    data = MainViewState(user = response.body)
+                )
             }
-        }
+
+            override fun createCall(): LiveData<GenericApiResponse<User>> {
+                return MyRetrofitBuilder.apiService.GetUser(userId)
+            }
+
+        }.asLiveData()
     }
+
+
 }
