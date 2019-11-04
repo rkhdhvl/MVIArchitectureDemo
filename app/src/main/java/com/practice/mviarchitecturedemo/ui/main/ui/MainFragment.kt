@@ -8,19 +8,33 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.practice.mviarchitecturedemo.R
+import com.practice.mviarchitecturedemo.ui.main.ui.adapter.MainRecyclerAdapter
 import com.practice.mviarchitecturedemo.ui.main.ui.state.MainStateEvent
+import com.practice.mviarchitecturedemo.ui.model.BlogPost
+import com.practice.mviarchitecturedemo.ui.model.User
+import com.practice.mviarchitecturedemo.ui.util.TopSpacingItemDecoration
+import kotlinx.android.synthetic.main.fragment_main.*
 import java.lang.ClassCastException
 import java.lang.Exception
 
 /**
  * A simple [Fragment] subclass.
  */
-class MainFragment : Fragment() {
+class MainFragment : Fragment(),MainRecyclerAdapter.Interaction {
+
+    override fun onItemSelected(position: Int, item: BlogPost) {
+       println("DEBUG : CLICKED $position")
+        println("DEBUG : CLICKED $item")
+    }
 
     lateinit var viewModel: MainViewModel
 
     lateinit var dataStateListener: DataStateListener
+
+    lateinit var blogListAdapter: MainRecyclerAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,6 +61,18 @@ class MainFragment : Fragment() {
         setHasOptionsMenu(true)
         viewModel = activity?.run { ViewModelProvider(this).get(MainViewModel::class.java) }?:throw(Exception("Invalid Activity"))
         subscribeObservers()
+        initRecyclerView()
+    }
+
+    private fun initRecyclerView()
+    {
+        recycler_view.apply {
+            layoutManager = LinearLayoutManager(activity)
+            val topSpacingDecorator = TopSpacingItemDecoration(30)
+            addItemDecoration(topSpacingDecorator)
+            blogListAdapter = MainRecyclerAdapter(this@MainFragment)
+            adapter = blogListAdapter
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -89,10 +115,26 @@ class MainFragment : Fragment() {
         // setting data to the widgets
         viewModel.viewState.observe(viewLifecycleOwner, Observer {
             viewState ->
-            viewState.blogPosts?.let { println("Setting up the recyclerview")}
-            viewState.user?.let { println("Setting up the user details")
+            viewState.blogPosts?.let {
+                // setting up the recyclerView here
+                lisOfBlogPosts ->
+                blogListAdapter.submitList(lisOfBlogPosts)
+            }
+            viewState.user?.let {
+                // setting the user details
+                user ->  setUserProperties(user)
             }
         })
+    }
+
+    private fun setUserProperties(user:User)
+    {
+        email.text = user.email
+        username.text = user.username
+        view?.let { Glide.with(it)
+            .load(user.image)
+            .into(image)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
