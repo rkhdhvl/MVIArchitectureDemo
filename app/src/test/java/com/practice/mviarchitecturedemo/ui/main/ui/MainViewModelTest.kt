@@ -35,6 +35,7 @@ class MainViewModelTest {
         mainViewModel.handleStates(MainStateEvent.GetBlogPostEvent())
         // Assert
         testObserver.assertValue { it.blogPosts?.equals(testBlogList) }
+            .assertHasValue()
             .assertHistorySize(1)
             .value().apply {
                 assertEquals(2, blogPosts?.size)
@@ -53,6 +54,7 @@ class MainViewModelTest {
         mainViewModel.handleStates(MainStateEvent.GetUserEvent("1"))
         // Assert
         testObserver.assertValue{ it.user?.equals(testUser)}
+            .assertHasValue()
             .assertHistorySize(1)
             .value().apply {
                 assertEquals(user?.username,testUser.username)
